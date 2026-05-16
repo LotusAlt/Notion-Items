@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Summer Mini Calendar</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+    margin:0;
+    padding:20px;
+    background:#000;
+    font-family: 'Fjalla One', monospace;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+/* CALENDAR WRAPPER */
+
+#calendar{
+    position:relative;
+    width:320px;
+}
+
+/* MAIN TABLE */
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    background:#111;
+    border:2px solid #ffcf70;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:
+        0 0 10px rgba(255,207,112,0.3),
+        0 0 25px rgba(255,183,77,0.15);
+}
+
+/* HEADER */
+
+.month{
+    background:linear-gradient(
+        90deg,
+        #ffb84d,
+        #ffd166,
+        #ff9f9f
+    );
+
+    color:#111;
+    font-size:1.4em;
+    letter-spacing:1px;
+    padding:18px 0;
+    position:relative;
+}
+
+.year{
+    display:block;
+    font-size:12px;
+    margin-top:4px;
+    color:#333;
+}
+
+/* DAYS */
+
+.day-header{
+    background:#1a1a1a;
+    color:#ffd166;
+    font-size:13px;
+    letter-spacing:1px;
+    padding:12px 0;
+}
+
+/* CELLS */
+
+td{
+    height:48px;
+    text-align:center;
+    background:#111;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+td span{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    width:34px;
+    height:34px;
+    margin:auto;
+    border-radius:50%;
+    color:#f4f4f4;
+    transition:0.25s ease;
+}
+
+/* HOVER */
+
+td span:hover{
+    background:#ffd166;
+    color:#111;
+    cursor:pointer;
+}
+
+/* TODAY */
+
+td.avui span{
+    background:linear-gradient(
+        135deg,
+        #ffb84d,
+        #ffd166
+    );
+
+    color:#111;
+    font-weight:bold;
+
+    box-shadow:
+        0 0 10px rgba(255,209,102,0.5);
+}
+
+/* OTHER MONTH DAYS */
+
+td.fora span{
+    opacity:0.22;
+}
+
+/* BUTTONS */
+
+.boto-next,
+.boto-prev{
+    position:absolute;
+    top:14px;
+
+    width:32px;
+    height:32px;
+
+    border:none;
+    border-radius:50%;
+
+    background:rgba(0,0,0,0.15);
+
+    color:#111;
+
+    font-size:16px;
+    cursor:pointer;
+
+    transition:0.2s ease;
+}
+
+.boto-prev{
+    left:12px;
+}
+
+.boto-next{
+    right:12px;
+}
+
+.boto-next:hover,
+.boto-prev:hover{
+    background:#111;
+    color:#ffd166;
+}
+
+/* ANIMATION */
+
+.actiu{
+    animation:fade 0.35s ease;
+}
+
+@keyframes fade{
+    from{
+        opacity:0;
+        transform:translateY(8px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="calendar"></div>
+
+<script>
+
+var months = [
+    'January','February','March','April',
+    'May','June','July','August',
+    'September','October','November','December'
+];
+
+var days_abr = [
+    'Su','Mo','Tu','We','Th','Fr','Sa'
+];
+
+Number.prototype.pad = function(num) {
+    var str = '';
+    for(var i = 0; i < (num-this.toString().length); i++)
+        str += '0';
+    return str += this.toString();
+}
+
+function calendar(widget, data){
+
+    var original = widget.getElementsByClassName('actiu')[0];
+
+    if(typeof original === 'undefined'){
+        original = document.createElement('table');
+
+        original.setAttribute(
+            'data-actual',
+            data.getFullYear() + '/' +
+            data.getMonth().pad(2) + '/' +
+            data.getDate().pad(2)
+        );
+
+        widget.appendChild(original);
+    }
+
+    var e = document.createElement('table');
+    e.className = 'actiu';
+
+    widget.appendChild(e);
+
+    e.setAttribute(
+        'data-actual',
+        data.getFullYear() + '/' +
+        data.getMonth().pad(2) + '/' +
+        data.getDate().pad(2)
+    );
+
+    /* HEADER */
+
+    var fila = document.createElement('tr');
+
+    var titol = document.createElement('th');
+    titol.setAttribute('colspan', 7);
+    titol.setAttribute('class','month');
+
+    var boto_prev = document.createElement('button');
+    boto_prev.className = 'boto-prev';
+    boto_prev.innerHTML = '&#10094;';
+
+    var boto_next = document.createElement('button');
+    boto_next.className = 'boto-next';
+    boto_next.innerHTML = '&#10095;';
+
+    titol.appendChild(boto_prev);
+
+    titol.appendChild(
+        document.createElement('span')
+    ).innerHTML =
+        months[data.getMonth()] +
+        '<span class="year">' +
+        data.getFullYear() +
+        '</span>';
+
+    titol.appendChild(boto_next);
+
+    fila.appendChild(titol);
+
+    e.appendChild(fila);
+
+    /* WEEKDAYS */
+
+    fila = document.createElement('tr');
+
+    for(var i = 0; i < 7; i++){
+        fila.innerHTML +=
+            '<th class="day-header">' +
+            days_abr[i] +
+            '</th>';
+    }
+
+    e.appendChild(fila);
+
+    /* START DATE */
+
+    var inici_mes =
+        new Date(
+            data.getFullYear(),
+            data.getMonth(),
+            1
+        ).getDay();
+
+    var actual =
+        new Date(
+            data.getFullYear(),
+            data.getMonth(),
+            1 - inici_mes
+        );
+
+    /* CALENDAR */
+
+    for(var s = 0; s < 6; s++){
+
+        fila = document.createElement('tr');
+
+        for(var d = 0; d < 7; d++){
+
+            var cela = document.createElement('td');
+
+            var span = document.createElement('span');
+
+            span.innerHTML = actual.getDate();
+
+            cela.appendChild(span);
+
+            if(actual.getMonth() !== data.getMonth()){
+                cela.className = 'fora';
+            }
+
+            var today = new Date();
+
+            if(
+                actual.getDate() === today.getDate() &&
+                actual.getMonth() === today.getMonth() &&
+                actual.getFullYear() === today.getFullYear()
+            ){
+                cela.className = 'avui';
+            }
+
+            actual.setDate(actual.getDate()+1);
+
+            fila.appendChild(cela);
+        }
+
+        e.appendChild(fila);
+    }
+
+    /* BUTTONS */
+
+    boto_prev.onclick = function(){
+
+        widget.innerHTML = '';
+
+        data.setMonth(data.getMonth() - 1);
+
+        calendar(widget, data);
+    };
+
+    boto_next.onclick = function(){
+
+        widget.innerHTML = '';
+
+        data.setMonth(data.getMonth() + 1);
+
+        calendar(widget, data);
+    };
+}
+
+calendar(
+    document.getElementById('calendar'),
+    new Date()
+);
+
+</script>
+
+</body>
+</html>
